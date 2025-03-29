@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-franquicias
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: db_franquicias
+  doc:
+    openapi:
+      pathsToMatch: /api/**
+  main:
+    allow-bean-definition-overriding: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
