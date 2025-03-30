@@ -1,4 +1,4 @@
-package com.proyecto.interno.api_franquicias.infrastructure.out.repository;
+package com.proyecto.interno.api_franquicias.infrastructure.out.repository.franquicia;
 
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;

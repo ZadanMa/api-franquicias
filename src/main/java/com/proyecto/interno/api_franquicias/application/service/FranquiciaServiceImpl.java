@@ -1,16 +1,17 @@
 package com.proyecto.interno.api_franquicias.application.service;
 
-import com.proyecto.interno.api_franquicias.domain.exception.InvalidFranquiciaException;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
+
 import com.proyecto.interno.api_franquicias.domain.port.in.FranquiciaManagementUseCase;
 import com.proyecto.interno.api_franquicias.domain.port.out.FranquiciaRepository;
+import com.proyecto.interno.api_franquicias.domain.port.out.SucursalRepository;
+import com.proyecto.interno.api_franquicias.domain.port.out.ProductoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,156 +19,97 @@ import java.util.Map;
 public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
 
     private final FranquiciaRepository franquiciaRepository;
+    private final SucursalRepository sucursalRepository;
+    private final ProductoRepository productoRepository;
 
     @Autowired
-    public FranquiciaServiceImpl(FranquiciaRepository franquiciaRepository) {
+    public FranquiciaServiceImpl(FranquiciaRepository franquiciaRepository,
+                                          SucursalRepository sucursalRepository,
+                                          ProductoRepository productoRepository) {
         this.franquiciaRepository = franquiciaRepository;
+        this.sucursalRepository = sucursalRepository;
+        this.productoRepository = productoRepository;
     }
 
     @Override
     public Mono<Franquicia> registrarFranquicia(Franquicia franquicia) {
-        return franquiciaRepository.save(franquicia);
+        return Mono.just(franquicia)
+                .filter(f -> f.getNombre() != null && !f.getNombre().isEmpty())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre de la franquicia no puede estar vacío")))
+                .flatMap(franquiciaRepository::save);
     }
 
     @Override
-    public Mono<Franquicia> agregarSucursal(String franquiciaId, Sucursal sucursal) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    f.getSucursales().add(sucursal);
-                    return franquiciaRepository.save(f);
-                });
+    public Mono<Sucursal> agregarSucursal(String franquiciaId, Sucursal sucursal) {
+        return Mono.just(sucursal)
+                .filter(s -> s != null)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("La sucursal no puede ser null")))
+                .flatMap(s -> franquiciaRepository.findById(franquiciaId)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada con ID: " + franquiciaId)))
+                        .map(franquicia -> {
+                            s.setFranquiciaId(franquicia.getId());
+                            return s;
+                        })
+                        .flatMap(sucursalRepository::save));
     }
 
     @Override
-    public Mono<Franquicia> agregarProducto(String franquiciaId, String sucursalId, Producto producto) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    return Flux.fromIterable(f.getSucursales())
-                            .filter(s -> s.getId().equals(sucursalId))
-                            .next()
-                            .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Sucursal no encontrada")))
-                            .map(sucursal -> {
-                                sucursal.getProductos().add(producto);
-                                return f;
-                            })
-                            .flatMap(franquiciaRepository::save);
-                });
+    public Mono<Producto> agregarProducto(String sucursalId, Producto producto) {
+        return Mono.just(producto)
+                .filter(p -> p != null)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El producto no puede ser null")))
+                .filter(p -> p.getNombre() != null && !p.getNombre().isEmpty())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre del producto es requerido")))
+                .flatMap(p -> sucursalRepository.findById(sucursalId)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId)))
+                        .map(sucursal -> {
+                            p.setSucursalId(sucursal.getId());
+                            return p;
+                        })
+                        .flatMap(productoRepository::save));
     }
 
     @Override
-    public Mono<Franquicia> eliminarProducto(String franquiciaId, String sucursalId, String productoId) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    return Flux.fromIterable(f.getSucursales())
-                            .filter(s -> s.getId().equals(sucursalId))
-                            .next()
-                            .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Sucursal no encontrada")))
-                            .flatMap(sucursal -> {
-                                return Flux.fromIterable(sucursal.getProductos())
-                                        .filter(p -> p.getId().equals(productoId))
-                                        .hasElements()
-                                        .flatMap(existeProducto -> {
-                                            if (!existeProducto) {
-                                                return Mono.error(new InvalidFranquiciaException("Producto no encontrado"));
-                                            }
-                                            sucursal.getProductos().removeIf(p -> p.getId().equals(productoId));
-                                            return franquiciaRepository.save(f);
-                                        });
-                            });
-                });
+    public Mono<Producto> modificarStockProducto(String productoId, int nuevoStock) {
+        return Mono.just(nuevoStock)
+                .filter(stock -> stock >= 0)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El stock no puede ser negativo")))
+                .flatMap(stock -> productoRepository.findById(productoId)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Producto no encontrado con ID: " + productoId)))
+                        .flatMap(producto -> {
+                            producto.setStock(stock);
+                            return productoRepository.save(producto);
+                        }));
     }
 
     @Override
-    public Mono<Franquicia> modificarStockProducto(String franquiciaId, String sucursalId, String productoId, int nuevoStock) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    return Flux.fromIterable(f.getSucursales())
-                            .filter(s -> s.getId().equals(sucursalId))
-                            .next()
-                            .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Sucursal no encontrada")))
-                            .flatMap(sucursal -> {
-                                return Flux.fromIterable(sucursal.getProductos())
-                                        .filter(p -> p.getId().equals(productoId))
-                                        .next()
-                                        .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Producto no encontrado")))
-                                        .map(producto -> {
-                                            producto.setStock(nuevoStock);
-                                            return f;
-                                        })
-                                        .flatMap(franquiciaRepository::save);
-                            });
-                });
+    public Mono<Void> eliminarProducto(String productoId) {
+        return productoRepository.findById(productoId)
+                .switchIfEmpty(Mono.error(new RuntimeException("Producto no encontrado con ID: " + productoId)))
+                .flatMap(productoRepository::delete);
     }
 
     @Override
     public Flux<Map<String, Object>> productoConMasStockPorSucursal(String franquiciaId) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMapMany(franquicia -> Flux.fromIterable(franquicia.getSucursales())
-                        .flatMap(sucursal ->
-                                Flux.fromIterable(sucursal.getProductos())
-                                        .reduce((p1, p2) -> p1.getStock() > p2.getStock() ? p1 : p2)
-                                        .map(maxProducto -> {
-                                            Map<String, Object> result = new LinkedHashMap<>();
-                                            result.put("sucursalId", sucursal.getId());
-                                            result.put("sucursalNombre", sucursal.getNombre());
-                                            result.put("producto", maxProducto);
-                                            return result;
-                                        })
-                        )
+        return sucursalRepository.findAllByFranquiciaId(franquiciaId)
+                .flatMap(sucursal ->
+                        productoRepository.findAllBySucursalId(sucursal.getId())
+                                .reduce((p1, p2) -> p1.getStock() >= p2.getStock() ? p1 : p2)
+                                .map(maxProducto -> {
+                                    Map<String, Object> result = new LinkedHashMap<>();
+                                    result.put("sucursalId", sucursal.getId());
+                                    result.put("sucursalNombre", sucursal.getNombre());
+                                    result.put("producto", maxProducto);
+                                    return result;
+                                })
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    Map<String, Object> emptyResult = new LinkedHashMap<>();
+                                    emptyResult.put("sucursalId", sucursal.getId());
+                                    emptyResult.put("sucursalNombre", sucursal.getNombre());
+                                    emptyResult.put("producto", null);
+                                    return Mono.just(emptyResult);
+                                }))
                 );
     }
 
-    @Override
-    public Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    f.setNombre(nuevoNombre);
-                    return franquiciaRepository.save(f);
-                });
-    }
-
-    @Override
-    public Mono<Franquicia> actualizarNombreSucursal(String franquiciaId, String sucursalId, String nuevoNombre) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    return Flux.fromIterable(f.getSucursales())
-                            .filter(s -> s.getId().equals(sucursalId))
-                            .next()
-                            .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Sucursal no encontrada")))
-                            .map(sucursal -> {
-                                sucursal.setNombre(nuevoNombre);
-                                return f;
-                            })
-                            .flatMap(franquiciaRepository::save);
-                });
-    }
-    @Override
-    public Mono<Franquicia> actualizarNombreProducto(String franquiciaId, String sucursalId, String productoId, String nuevoNombre) {
-        return franquiciaRepository.findById(franquiciaId)
-                .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Franquicia no encontrada")))
-                .flatMap(f -> {
-                    return Flux.fromIterable(f.getSucursales())
-                            .filter(s -> s.getId().equals(sucursalId))
-                            .next()
-                            .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Sucursal no encontrada")))
-                            .flatMap(sucursal -> {
-                                return Flux.fromIterable(sucursal.getProductos())
-                                        .filter(p -> p.getId().equals(productoId))
-                                        .next()
-                                        .switchIfEmpty(Mono.error(new InvalidFranquiciaException("Producto no encontrado")))
-                                        .map(producto -> {
-                                            producto.setNombre(nuevoNombre);
-                                            return f;
-                                        })
-                                        .flatMap(franquiciaRepository::save);
-                            });
-                });
-    }
 }

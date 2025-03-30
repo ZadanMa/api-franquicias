@@ -1,10 +1,9 @@
 package com.proyecto.interno.api_franquicias.infrastructure.in.webflux;
 
-import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDto;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
-import com.proyecto.interno.api_franquicias.application.service.FranquiciaServiceImpl;
+import com.proyecto.interno.api_franquicias.domain.port.in.FranquiciaManagementUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,71 +15,48 @@ import java.util.Map;
 @RequestMapping("/api/franquicias")
 public class FranquiciaController {
 
-    private final FranquiciaServiceImpl franquiciaService;
+    private final FranquiciaManagementUseCase service;
 
     @Autowired
-    public FranquiciaController(FranquiciaServiceImpl franquiciaService) {
-        this.franquiciaService = franquiciaService;
+    public FranquiciaController(FranquiciaManagementUseCase service) {
+        this.service = service;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Franquicia> registrarFranquicia(@RequestBody Franquicia franquicia) {
-        return franquiciaService.registrarFranquicia(franquicia);
+        return service.registrarFranquicia(franquicia);
     }
 
     @PostMapping("/{franquiciaId}/sucursales")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Franquicia> agregarSucursal(@PathVariable String franquiciaId,
-                                            @RequestBody Sucursal sucursal) {
-        return franquiciaService.agregarSucursal(franquiciaId, sucursal);
+    public Mono<Sucursal> agregarSucursal(@PathVariable String franquiciaId,
+                                          @RequestBody Sucursal sucursal) {
+        return service.agregarSucursal(franquiciaId, sucursal);
     }
 
-    @PostMapping("/{franquiciaId}/sucursales/{sucursalId}/productos")
+    @PostMapping("/sucursales/{sucursalId}/productos")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Franquicia> agregarProducto(@PathVariable String franquiciaId,
-                                            @PathVariable String sucursalId,
-                                            @RequestBody Producto producto) {
-        return franquiciaService.agregarProducto(franquiciaId, sucursalId, producto);
+    public Mono<Producto> agregarProducto(@PathVariable String sucursalId,
+                                          @RequestBody Producto producto) {
+        return service.agregarProducto(sucursalId, producto);
     }
 
-    @DeleteMapping("/{franquiciaId}/sucursales/{sucursalId}/productos/{productoId}")
+    @DeleteMapping("/productos/{productoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Franquicia> eliminarProducto(@PathVariable String franquiciaId,
-                                             @PathVariable String sucursalId,
-                                             @PathVariable String productoId) {
-        return franquiciaService.eliminarProducto(franquiciaId, sucursalId, productoId);
+    public Mono<Void> eliminarProducto(@PathVariable String productoId) {
+        return service.eliminarProducto(productoId);
     }
 
-    @PutMapping("/{franquiciaId}/sucursales/{sucursalId}/productos/{productoId}/stock")
-    public Mono<Franquicia> modificarStockProducto(@PathVariable String franquiciaId,
-                                                   @PathVariable String sucursalId,
-                                                   @PathVariable String productoId,
-                                                   @RequestParam int nuevoStock) {
-        return franquiciaService.modificarStockProducto(franquiciaId, sucursalId, productoId, nuevoStock);
+    @PutMapping("/productos/{productoId}/stock")
+    public Mono<Producto> modificarStockProducto(@PathVariable String productoId,
+                                                 @RequestParam int nuevoStock) {
+        return service.modificarStockProducto(productoId, nuevoStock);
     }
 
     @GetMapping("/{franquiciaId}/productos/mas-stock")
     public Flux<Map<String, Object>> productoConMasStockPorSucursal(@PathVariable String franquiciaId) {
-        return franquiciaService.productoConMasStockPorSucursal(franquiciaId);
-    }
-    @PutMapping("/{franquiciaId}/nombre")
-    public Mono<Franquicia> actualizarNombreFranquicia(@PathVariable String franquiciaId,
-                                                       @RequestBody FranquiciaDto nuevoNombre) {
-        return franquiciaService.actualizarNombreFranquicia(franquiciaId, nuevoNombre.getNuevoFranquicia());
+        return service.productoConMasStockPorSucursal(franquiciaId);
     }
 
-    @PutMapping("/{franquiciaId}/sucursales/{sucursalId}/nombre")
-    public Mono<Franquicia> actualizarNombreSucursal(@PathVariable String franquiciaId,
-                                                     @PathVariable String sucursalId,
-                                                     @RequestParam String nuevoNombre) {
-        return franquiciaService.actualizarNombreSucursal(franquiciaId, sucursalId, nuevoNombre);
-    }
-    @PutMapping("/{franquiciaId}/sucursales/{sucursalId}/productos/{productoId}/nombre")
-    public Mono<Franquicia> actualizarNombreProducto(@PathVariable String franquiciaId,
-                                                     @PathVariable String sucursalId,
-                                                     @PathVariable String productoId,
-                                                     @RequestParam String nuevoNombre) {
-        return franquiciaService.actualizarNombreProducto(franquiciaId, sucursalId, productoId, nuevoNombre);
-    }
 }

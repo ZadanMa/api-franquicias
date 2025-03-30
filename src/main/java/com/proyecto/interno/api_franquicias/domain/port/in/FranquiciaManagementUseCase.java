@@ -9,16 +9,20 @@ import java.util.Map;
 
 public interface FranquiciaManagementUseCase {
 
+    // Operaciones de Franquicia
     Mono<Franquicia> registrarFranquicia(Franquicia franquicia);
     Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre);
 
-    Mono<Franquicia> agregarSucursal(String franquiciaId, Sucursal sucursal);
-    Mono<Franquicia> actualizarNombreSucursal(String franquiciaId, String sucursalId, String nuevoNombre);
+    // Operaciones de Sucursal
+    Mono<Sucursal> agregarSucursal(String franquiciaId, Sucursal sucursal);
+    Mono<Sucursal> actualizarNombreSucursal(String franquiciaId, String sucursalId, String nuevoNombre);
 
-    Mono<Franquicia> agregarProducto(String franquiciaId, String sucursalId, Producto producto);
-    Mono<Franquicia> eliminarProducto(String franquiciaId, String sucursalId, String productoId);
-    Mono<Franquicia> actualizarNombreProducto(String franquiciaId, String sucursalId, String productoId, String nuevoNombre);
-    Mono<Franquicia> modificarStockProducto(String franquiciaId, String sucursalId, String productoId, int nuevoStock);
+    // Operaciones de Producto
+    Mono<Producto> agregarProducto(String sucursalId, Producto producto);
+    Mono<Void> eliminarProducto(String productoId);
+    Mono<Producto> actualizarNombreProducto(String productoId, String nuevoNombre);
+    Mono<Producto> modificarStockProducto(String productoId, int nuevoStock);
 
+    // Consulta: Producto con mayor stock por sucursal para una franquicia
     Flux<Map<String, Object>> productoConMasStockPorSucursal(String franquiciaId);
 }
