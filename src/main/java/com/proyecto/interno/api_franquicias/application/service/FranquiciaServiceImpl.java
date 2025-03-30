@@ -111,5 +111,41 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                                 }))
                 );
     }
-
+    @Override
+    public Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre) {
+        return Mono.just(nuevoNombre)
+                .filter(nombre -> nombre != null && !nombre.isEmpty())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío")))
+                .flatMap(nombre -> franquiciaRepository.findById(franquiciaId)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada con ID: " + franquiciaId)))
+                        .flatMap(franquicia -> {
+                            franquicia.setNombre(nombre);
+                            return franquiciaRepository.save(franquicia);
+                        }));
+    }
+    @Override
+    public Mono<Sucursal> actualizarNombreSucursal(String franquiciaId, String sucursalId, String nuevoNombre) {
+        return Mono.just(nuevoNombre)
+                .filter(nombre -> nombre != null && !nombre.isEmpty())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío")))
+                .flatMap(nombre -> sucursalRepository.findById(sucursalId)
+                        .filter(sucursal -> sucursal.getFranquiciaId().equals(franquiciaId))
+                        .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId + " para la franquicia con ID: " + franquiciaId)))
+                        .flatMap(sucursal -> {
+                            sucursal.setNombre(nombre);
+                            return sucursalRepository.save(sucursal);
+                        }));
+    }
+    @Override
+    public Mono<Producto> actualizarNombreProducto(String productoId, String nuevoNombre) {
+        return Mono.justOrEmpty(nuevoNombre)
+                .filter(nombre -> !nombre.trim().isEmpty())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío")))
+                .flatMap(nombre -> productoRepository.findById(productoId)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Producto no encontrado con ID: " + productoId)))
+                        .flatMap(producto -> {
+                            producto.setNombre(nombre);
+                            return productoRepository.save(producto);
+                        }));
+    }
 }

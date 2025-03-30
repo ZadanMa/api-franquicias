@@ -59,4 +59,22 @@ public class FranquiciaController {
         return service.productoConMasStockPorSucursal(franquiciaId);
     }
 
+    @PutMapping("/{franquiciaId}/nombre")
+    public Mono<Franquicia> actualizarNombreFranquicia(@PathVariable String franquiciaId,
+                                                       @RequestParam String nuevoNombre) {
+        return service.actualizarNombreFranquicia(franquiciaId, nuevoNombre);
+    }
+
+    @PutMapping("/{franquiciaId}/sucursales/{sucursalId}/nombre")
+    public Mono<Sucursal> actualizarNombreSucursal(@PathVariable String franquiciaId,
+                                                   @PathVariable String sucursalId,
+                                                   @RequestParam String nuevoNombre) {
+        return service.actualizarNombreSucursal(franquiciaId, sucursalId, nuevoNombre);
+    }
+
+    @PutMapping("/productos/{productoId}/nombre")
+    public Mono<Producto> actualizarNombreProducto(@PathVariable String productoId,
+                                                   @RequestParam String nuevoNombre) {
+        return service.actualizarNombreProducto(productoId, nuevoNombre);
+    }
 }
