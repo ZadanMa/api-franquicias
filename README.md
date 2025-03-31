@@ -64,14 +64,14 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 mvn clean install
 mvn spring-boot:run
 ```
-##Ejecución con Docker
+## Ejecución con Docker
 - Para construir y ejecutar la aplicación en un contenedor Docker:
 ```bash
 docker build -t api-franquicias .
 docker run -p 8080:8080 --name api-franquicias api-franquicias
 ```
-##Endpoints Principales
-###Franquicias
+## Endpoints Principales
+### Franquicias
 - POST /api/franquicias - Registrar una franquicia
 
 - PUT /api/franquicias/{franquiciaId} - Actualizar nombre de una franquicia
@@ -80,7 +80,7 @@ docker run -p 8080:8080 --name api-franquicias api-franquicias
 
 - GET /api/franquicias/{franquiciaId}/mas-stock - Obtener el producto con más stock en una sucursal de la franquicia
 
-###Sucursales
+### Sucursales
 - POST /api/franquicias/{franquiciaId}/sucursales - Agregar una nueva sucursal a una franquicia
 
 - PUT /api/franquicias/sucursales/{sucursalId} - Actualizar el nombre de una sucursal
@@ -91,7 +91,7 @@ docker run -p 8080:8080 --name api-franquicias api-franquicias
 
 - GET /api/franquicias/sucursales/{sucursalId} - Obtener una sucursal por ID
 
-###Productos
+### Productos
 - POST /api/franquicias/sucursales/{sucursalId}/productos - Agregar un producto a una sucursal
 
 - POST /api/franquicias/productos - Registrar un nuevo producto
@@ -108,11 +108,11 @@ docker run -p 8080:8080 --name api-franquicias api-franquicias
 
 - PUT /api/franquicias/productos/{productoId}/nombre - Actualizar nombre de un producto
 
-##Notas Adicionales
+## Notas Adicionales
 - La aplicación está diseñada para ser reactiva y escalar de manera eficiente.
 
 - Se recomienda el uso de herramientas como Postman o cURL para probar los endpoint
 
-##Contribuciones
+## Contribuciones
 
-##Licencias
+## Licencias
