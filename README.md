@@ -53,13 +53,13 @@ git clone https://github.com/tuusuario/api-franquicias.git
 cd api_franquicias
 ```
 
-###2. Configurar MongoDB
+### 2. Configurar MongoDB
 - Si usas MongoDB localmente, asegúrate de que esté corriendo en mongodb://localhost:27017. Puedes usar Docker para levantar una instancia:
 ```bash
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 ```
 
-###3. Construir y ejecutar la aplicación
+### 3. Construir y ejecutar la aplicación
 ```bash
 mvn clean install
 mvn spring-boot:run
