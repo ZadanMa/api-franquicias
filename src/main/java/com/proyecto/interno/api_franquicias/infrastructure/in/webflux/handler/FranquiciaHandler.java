@@ -225,17 +225,15 @@ public class FranquiciaHandler {
     }
 
     public Mono<ServerResponse> eliminarProducto(ServerRequest request) {
-        return Mono.zip(
-                        Mono.just(request.pathVariable("sucursalId")),
-                        Mono.just(request.pathVariable("productoId"))
-                )
-                .flatMap(tuple -> service.eliminarProducto(tuple.getT1(), tuple.getT2()))
+        String productoId = request.pathVariable("productoId");
+        return service.eliminarProducto(productoId)
                 .then(ServerResponse.noContent().build())
-                .onErrorResume(e -> e.getMessage().contains("no encontrad")
+                .onErrorResume(e -> e.getMessage().contains("no encontrado")
                         ? ServerResponse.notFound().build()
                         : ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .bodyValue(new ErrorResponse(e.getMessage())));
     }
+
 
     public Mono<ServerResponse> actualizarStockProducto(ServerRequest request) {
         return request.bodyToMono(ProductoStockDto.class)

@@ -27,7 +27,7 @@ public interface FranquiciaManagementUseCase {
     Mono<Producto> asociarProductoASucursal(String sucursalId, String productoId);
     Flux<Producto> getAllProductos();
     Mono<Producto> getProductoById(String productoId);
-    Mono<Void> eliminarProducto(String sucursalId, String productoId);
+    Mono<Void> eliminarProducto(String productoId);
     Mono<Producto> actualizarNombreProducto(String productoId, String nuevoNombre);
     Mono<Producto> modificarStockProducto(String productoId, int nuevoStock);
 

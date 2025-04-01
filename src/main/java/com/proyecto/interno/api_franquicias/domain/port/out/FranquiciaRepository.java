@@ -13,4 +13,6 @@ public interface FranquiciaRepository {
     Flux<Franquicia> findAll();
 
     Mono<Void> deleteById(String id);
+
+    Mono<Franquicia> findByNombre(String nombre);
 }

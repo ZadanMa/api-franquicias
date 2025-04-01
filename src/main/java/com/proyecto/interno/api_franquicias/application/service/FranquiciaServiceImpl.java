@@ -40,7 +40,11 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
         return Mono.just(franquicia)
                 .filter(f -> f.getNombre() != null && !f.getNombre().isEmpty())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre de la franquicia no puede estar vacío")))
-                .flatMap(franquiciaRepository::save);
+                .flatMap(f ->
+                        franquiciaRepository.findByNombre(f.getNombre())
+                                .flatMap(existing -> Mono.<Franquicia>error(new IllegalArgumentException("Ya existe una franquicia con ese nombre")))
+                                .switchIfEmpty(franquiciaRepository.save(f))
+                );
     }
     @Override
     public Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre) {
@@ -128,7 +132,10 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                             s.setFranquiciaId(franquicia.getId());
                             return s;
                         })
-                        .flatMap(sucursalRepository::save));
+                        .flatMap(suc -> sucursalRepository.findByNombre(suc.getNombre())
+                                .flatMap(existing -> Mono.<Sucursal>error(new IllegalArgumentException("Ya existe una sucursal con ese nombre")))
+                                .switchIfEmpty(sucursalRepository.save(suc)))
+                        );
     }
     @Override
     public Mono<Sucursal> registrarSucursal(Sucursal sucursal) {
@@ -137,7 +144,10 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("La sucursal no puede ser null")))
                 .filter(s -> s.getNombre() != null && !s.getNombre().isEmpty())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre de la sucursal no puede estar vacío")))
-                .flatMap(sucursalRepository::save);
+                .flatMap(suc -> sucursalRepository.findByNombre(suc.getNombre())
+                        .flatMap(existing -> Mono.<Sucursal>error(new IllegalArgumentException("Ya existe una sucursal con ese nombre")))
+                        .switchIfEmpty(sucursalRepository.save(suc))
+                );
     }
     @Override
     public Mono<Sucursal> asociarSucursalAFranquicia(String franquiciaId, String sucursalId) {
@@ -171,22 +181,30 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El producto no puede ser null")))
                 .filter(p -> p.getNombre() != null && !p.getNombre().isEmpty())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre del producto es requerido")))
+                .filter(p -> p.getStock() != null && p.getStock() >= 0)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El stock del producto es nulo o es negativo")))
                 .flatMap(p -> sucursalRepository.findById(sucursalId)
                         .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId)))
                         .map(sucursal -> {
                             p.setSucursalId(sucursal.getId());
                             return p;
                         })
-                        .flatMap(productoRepository::save));
+                        .flatMap(prod -> productoRepository.findByNombre(prod.getNombre())
+                                .flatMap(existing -> Mono.<Producto>error(new IllegalArgumentException("Ya existe un producto con ese nombre")))
+                                .switchIfEmpty(productoRepository.save(prod))
+                        ));
     }
     @Override
     public Mono<Producto> registrarProducto(Producto producto) {
         return Mono.just(producto)
-                .filter(p -> p != null)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("El producto no puede ser null")))
                 .filter(p -> p.getNombre() != null && !p.getNombre().isEmpty())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre del producto es requerido")))
-                .flatMap(productoRepository::save);
+                .filter(p -> p.getStock() != null && p.getStock() >= 0)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El stock del producto es nulo o es negativo")))
+                .flatMap(prod -> productoRepository.findByNombre(prod.getNombre())
+                        .flatMap(existing -> Mono.<Producto>error(new IllegalArgumentException("Ya existe un producto con ese nombre")))
+                        .switchIfEmpty(productoRepository.save(prod))
+                );
     }
     @Override
     public Mono<Producto> asociarProductoASucursal(String sucursalId, String productoId) {
@@ -221,15 +239,12 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                         }));
     }
     @Override
-    public Mono<Void> eliminarProducto(String sucursalId, String productoId) {
-        return sucursalRepository.findById(sucursalId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId)))
-                .then(productoRepository.findById(productoId))
+    public Mono<Void> eliminarProducto(String productoId) {
+        return productoRepository.findById(productoId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Producto no encontrado con ID: " + productoId)))
-                .filter(producto -> producto.getSucursalId().equals(sucursalId))
-                .switchIfEmpty(Mono.error(new RuntimeException("El producto no pertenece a la sucursal indicada")))
                 .flatMap(producto -> productoRepository.deleteById(productoId));
     }
+
     @Override
     public Mono<Sucursal> actualizarNombreSucursal(String sucursalId, String nuevoNombre) {
         if(nuevoNombre == null || nuevoNombre.isEmpty()){

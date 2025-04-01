@@ -45,4 +45,9 @@ public class ProductoRepositoryImpl implements ProductoRepository {
     public Mono<Void> delete(Producto producto) {
         return reactiveRepository.delete(producto);
     }
+
+    @Override
+    public Mono<Producto> findByNombre(String nombre) {
+        return reactiveRepository.findByNombre(nombre);
+    }
 }

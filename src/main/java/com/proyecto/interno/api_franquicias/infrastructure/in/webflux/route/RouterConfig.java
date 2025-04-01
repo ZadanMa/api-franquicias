@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
@@ -20,27 +21,28 @@ public class RouterConfig {
 
     @PostConstruct
     public void init() {
-        log.info("✅ RouterConfig cargado correctamente");
+        log.info("RouterConfig funcionaa");
     }
     @Bean
     public RouterFunction<ServerResponse> franquiciaRoutes(FranquiciaHandler handler) {
-        return route(POST("/api/franquicias").and(accept(APPLICATION_JSON)), handler::registrarFranquicia)
-                .andRoute(PUT("/api/franquicias/{franquiciaId}").and(accept(APPLICATION_JSON)), handler::actualizarNombreFranquicia)
-                .andRoute(GET("/api/franquicias/{franquiciaId}/info").and(accept(APPLICATION_JSON)), handler::getFranquiciaCompleta)
-                .andRoute(GET("/api/franquicias/{franquiciaId}/mas-stock").and(accept(APPLICATION_JSON)), handler::productoConMasStockPorSucursal)
-                .andRoute(POST("/api/franquicias/{franquiciaId}/sucursales").and(accept(APPLICATION_JSON)), handler::agregarSucursal)
-                .andRoute(PUT("/api/franquicias/sucursales/{sucursalId}").and(accept(APPLICATION_JSON)), handler::actualizarNombreSucursal)
-                .andRoute(POST("/api/franquicias/sucursales").and(accept(APPLICATION_JSON)), handler::registrarSucursal)
-                .andRoute(PUT("/api/franquicias/{franquiciaId}/sucursales/asociar/{sucursalId}").and(accept(APPLICATION_JSON)), handler::asociarSucursalAFranquicia)
-                .andRoute(GET("/api/franquicias/sucursales"), handler::getAllSucursales)
-                .andRoute(GET("/api/franquicias/sucursales/{sucursalId}").and(accept(APPLICATION_JSON)), handler::getSucursalById)
-                .andRoute(POST("/api/franquicias/sucursales/{sucursalId}/productos").and(accept(APPLICATION_JSON)), handler::agregarProducto)
-                .andRoute(POST("/api/franquicias/productos").and(accept(APPLICATION_JSON)), handler::registrarProducto)
-                .andRoute(PUT("/api/franquicias/sucursales/{sucursalId}/productos/asociar/{productoId}").and(accept(APPLICATION_JSON)), handler::asociarProductoASucursal)
-                .andRoute(GET("/api/franquicias/productos").and(accept(APPLICATION_JSON)), handler::getAllProductos)
-                .andRoute(GET("/api/franquicias/productos/{productoId}").and(accept(APPLICATION_JSON)), handler::getProductoById)
-                .andRoute(DELETE("/api/franquicias/sucursales/{sucursalId}/productos/{productoId}"), handler::eliminarProducto)
-                .andRoute(PUT("/api/franquicias/productos/{productoId}/stock").and(accept(APPLICATION_JSON)), handler::actualizarStockProducto)
-                .andRoute(PUT("/api/franquicias/productos/{productoId}/nombre").and(accept(APPLICATION_JSON)), handler::actualizarNombreProducto);
+        return RouterFunctions.nest(path("/api/franquicias"),
+                route(POST("").and(accept(APPLICATION_JSON)), handler::registrarFranquicia)
+                .andRoute(PUT("/{franquiciaId}").and(accept(APPLICATION_JSON)), handler::actualizarNombreFranquicia)
+                .andRoute(GET("/{franquiciaId}/info").and(accept(APPLICATION_JSON)), handler::getFranquiciaCompleta)
+                .andRoute(GET("/{franquiciaId}/mas-stock").and(accept(APPLICATION_JSON)), handler::productoConMasStockPorSucursal)
+                .andRoute(POST("/{franquiciaId}/sucursales").and(accept(APPLICATION_JSON)), handler::agregarSucursal)
+                .andRoute(PUT("/sucursales/{sucursalId}").and(accept(APPLICATION_JSON)), handler::actualizarNombreSucursal)
+                .andRoute(POST("/sucursales").and(accept(APPLICATION_JSON)), handler::registrarSucursal)
+                .andRoute(PUT("/{franquiciaId}/sucursales/asociar/{sucursalId}").and(accept(APPLICATION_JSON)), handler::asociarSucursalAFranquicia)
+                .andRoute(GET("/sucursales"), handler::getAllSucursales)
+                .andRoute(GET("/sucursales/{sucursalId}").and(accept(APPLICATION_JSON)), handler::getSucursalById)
+                .andRoute(POST("/sucursales/{sucursalId}/productos").and(accept(APPLICATION_JSON)), handler::agregarProducto)
+                .andRoute(POST("/productos").and(accept(APPLICATION_JSON)), handler::registrarProducto)
+                .andRoute(PUT("/sucursales/{sucursalId}/productos/asociar/{productoId}").and(accept(APPLICATION_JSON)), handler::asociarProductoASucursal)
+                .andRoute(GET("/productos").and(accept(APPLICATION_JSON)), handler::getAllProductos)
+                .andRoute(GET("/productos/{productoId}").and(accept(APPLICATION_JSON)), handler::getProductoById)
+                .andRoute(DELETE("/productos/{productoId}"), handler::eliminarProducto)
+                .andRoute(PUT("/productos/{productoId}/stock").and(accept(APPLICATION_JSON)), handler::actualizarStockProducto)
+                .andRoute(PUT("/productos/{productoId}/nombre").and(accept(APPLICATION_JSON)), handler::actualizarNombreProducto));
     }
 }

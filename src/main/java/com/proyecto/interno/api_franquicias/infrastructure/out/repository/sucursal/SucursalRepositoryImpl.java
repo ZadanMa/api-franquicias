@@ -41,4 +41,8 @@ public class SucursalRepositoryImpl implements SucursalRepository {
     public Flux<Sucursal> findAllByFranquiciaId(String franquiciaId) {
         return reactiveRepository.findAllByFranquiciaId(franquiciaId);
     }
+    @Override
+    public Mono<Sucursal> findByNombre(String nombre) {
+        return reactiveRepository.findByNombre(nombre);
+    }
 }

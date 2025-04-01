@@ -17,4 +17,6 @@ public interface ProductoRepository {
     Flux<Producto> findAllBySucursalId(String sucursalId);
 
     Mono<Void> delete(Producto producto);
+
+    Mono<Producto> findByNombre(String nombre);
 }

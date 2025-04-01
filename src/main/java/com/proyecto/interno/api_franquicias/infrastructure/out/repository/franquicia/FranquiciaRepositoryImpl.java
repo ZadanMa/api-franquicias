@@ -36,4 +36,9 @@ public class FranquiciaRepositoryImpl implements FranquiciaRepository {
     public Mono<Void> deleteById(String id) {
         return reactiveRepository.deleteById(id);
     }
+
+    @Override
+    public Mono<Franquicia> findByNombre(String nombre) {
+        return reactiveRepository.findByNombre(nombre);
+    }
 }

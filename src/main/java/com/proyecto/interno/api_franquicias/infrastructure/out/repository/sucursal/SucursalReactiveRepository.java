@@ -4,8 +4,10 @@ import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 @Repository
 public interface SucursalReactiveRepository extends ReactiveMongoRepository<Sucursal, String> {
     Flux<Sucursal> findAllByFranquiciaId(String franquiciaId);
+    Mono<Sucursal> findByNombre(String nombre);
 }

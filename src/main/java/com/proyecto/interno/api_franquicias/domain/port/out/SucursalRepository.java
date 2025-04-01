@@ -11,4 +11,5 @@ public interface SucursalRepository {
     Flux<Sucursal> findAll();
     Mono<Void> deleteById(String id);
     Flux<Sucursal> findAllByFranquiciaId(String franquiciaId);
+    Mono<Sucursal> findByNombre(String nombre);
 }
