@@ -1,6 +1,7 @@
 # API Franquicias - Aplicación Reactiva con Spring Boot, WebFlux y MongoDB
 
 Esta aplicación es una API para manejar una lista de franquicias, donde cada franquicia tiene un nombre y una lista de sucursales. Cada sucursal tiene un nombre y una lista de productos, y cada producto se define por su nombre y cantidad de stock. La aplicación está desarrollada con Spring Boot, WebFlux y MongoDB en modo reactivo, utilizando un enfoque basado en Router/Handler para aprovechar al máximo la programación funcional y no bloqueante.
+El api esta en fase de desarrollo, para acceder a la api, debe dirigirse a la rama dev.
 
 ## Tabla de Contenidos
 
