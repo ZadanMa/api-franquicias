@@ -11,11 +11,16 @@ import com.proyecto.interno.api_franquicias.domain.port.in.FranquiciaManagementU
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import com.proyecto.interno.api_franquicias.domain.exception.ErrorResponse;
+
+import java.time.Instant;
+import java.util.Map;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
@@ -258,6 +263,15 @@ public class FranquiciaHandler {
                         ? ServerResponse.notFound().build()
                         : ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .bodyValue(new ErrorResponse(e.getMessage())));
+    }
+    public Mono<ServerResponse> healthCheck(ServerRequest request) {
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "status", "UP",
+                        "service", "Franquicias API",
+                        "timestamp", Instant.now()
+                ));
     }
 
 }

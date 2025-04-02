@@ -24,6 +24,11 @@ public class RouterConfig {
         log.info("RouterConfig funcionaa");
     }
     @Bean
+    public RouterFunction<ServerResponse> healthRoute(FranquiciaHandler handler) {
+        return route(GET("/health"), handler::healthCheck)
+                .andRoute(GET("/actuator/health"), handler::healthCheck); // Opcional para compatibilidad con estándares
+    }
+    @Bean
     public RouterFunction<ServerResponse> franquiciaRoutes(FranquiciaHandler handler) {
         return RouterFunctions.nest(path("/api/franquicias"),
                 route(POST("").and(accept(APPLICATION_JSON)), handler::registrarFranquicia)

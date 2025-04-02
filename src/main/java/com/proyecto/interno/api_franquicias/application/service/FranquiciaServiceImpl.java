@@ -37,7 +37,7 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
 
     @Override
     public Mono<Franquicia> registrarFranquicia(Franquicia franquicia) {
-        return Mono.just(franquicia)
+        return Mono.justOrEmpty(franquicia)
                 .filter(f -> f.getNombre() != null && !f.getNombre().isEmpty())
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre de la franquicia no puede estar vacío")))
                 .flatMap(f ->
@@ -176,7 +176,7 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
 
     @Override
     public Mono<Producto> agregarProducto(String sucursalId, Producto producto) {
-        return Mono.just(producto)
+        return Mono.justOrEmpty(producto)
                 .filter(p -> p != null)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("El producto no puede ser null")))
                 .filter(p -> p.getNombre() != null && !p.getNombre().isEmpty())
@@ -245,18 +245,18 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                 .flatMap(producto -> productoRepository.deleteById(productoId));
     }
 
-    @Override
-    public Mono<Sucursal> actualizarNombreSucursal(String sucursalId, String nuevoNombre) {
-        if(nuevoNombre == null || nuevoNombre.isEmpty()){
-            return Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío"));
-        }
-        return sucursalRepository.findById(sucursalId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId)))
-                .flatMap(sucursal -> {
-                    sucursal.setNombre(nuevoNombre);
-                    return sucursalRepository.save(sucursal);
-                });
-    }
+   public Mono<Sucursal> actualizarNombreSucursal(String sucursalId, String nuevoNombre) {
+       if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
+           return Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío"));
+       }
+
+       return sucursalRepository.findById(sucursalId)
+               .switchIfEmpty(Mono.error(new RuntimeException("Sucursal no encontrada con ID: " + sucursalId)))
+               .flatMap(sucursal -> {
+                   sucursal.setNombre(nuevoNombre);
+                   return sucursalRepository.save(sucursal);
+               });
+   }
 
     @Override
     public Mono<Producto> actualizarNombreProducto(String productoId, String nuevoNombre) {

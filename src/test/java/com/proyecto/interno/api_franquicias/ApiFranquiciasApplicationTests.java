@@ -8,6 +8,7 @@ class ApiFranquiciasApplicationTests {
 
     @Test
     void contextLoads() {
+        ApiFranquiciasApplication.main(new String[]{});
     }
 
 }
