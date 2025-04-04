@@ -1,6 +1,6 @@
 //package com.proyecto.interno.api_franquicias.infrastructure.in.webflux;
 //
-//import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDetailsDTO;
+//import com.proyecto.interno.api_franquicias.domain.model.FranquiciaDetails;
 //import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDto;
 //import com.proyecto.interno.api_franquicias.application.dto.ProductoDto;
 //import com.proyecto.interno.api_franquicias.application.dto.SucursalDto;
@@ -39,7 +39,7 @@
 //        return service.actualizarNombreFranquicia(franquiciaId, nuevoFranquicia.getNuevoFranquicia());
 //    }
 //    @GetMapping("/{franquiciaId}")
-//    public Mono<FranquiciaDetailsDTO> getFranquiciaCompleta(@PathVariable String franquiciaId) {
+//    public Mono<FranquiciaDetails> getFranquiciaCompleta(@PathVariable String franquiciaId) {
 //        return service.getFranquiciaCompleta(franquiciaId);
 //    }
 //    @GetMapping("/{franquiciaId}/mas-stock")

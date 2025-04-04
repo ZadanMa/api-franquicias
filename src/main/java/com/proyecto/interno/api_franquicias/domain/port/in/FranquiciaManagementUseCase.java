@@ -1,6 +1,6 @@
 package com.proyecto.interno.api_franquicias.domain.port.in;
 
-import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDetailsDTO;
+import com.proyecto.interno.api_franquicias.domain.model.FranquiciaDetails;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
@@ -13,7 +13,7 @@ public interface FranquiciaManagementUseCase {
     Mono<Franquicia> registrarFranquicia(Franquicia franquicia);
     Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre);
     Flux<Map<String, Object>> productoConMasStockPorSucursal(String franquiciaId);
-    Mono<FranquiciaDetailsDTO> getFranquiciaCompleta(String franquiciaId);
+    Mono<FranquiciaDetails> getFranquiciaCompleta(String franquiciaId);
 
     Mono<Sucursal> agregarSucursal(String franquiciaId, Sucursal sucursal);
     Mono<Sucursal> registrarSucursal(Sucursal sucursal);

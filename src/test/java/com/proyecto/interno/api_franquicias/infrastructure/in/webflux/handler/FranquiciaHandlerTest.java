@@ -2,6 +2,7 @@ package com.proyecto.interno.api_franquicias.infrastructure.in.webflux.handler;
 
 import com.proyecto.interno.api_franquicias.application.dto.*;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
+import com.proyecto.interno.api_franquicias.domain.model.FranquiciaDetails;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.port.in.FranquiciaManagementUseCase;
@@ -94,7 +95,7 @@ class FranquiciaHandlerTest {
 
     @Test
     void getFranquiciaCompleta() {
-        FranquiciaDetailsDTO franquiciaDetailsDTO = new FranquiciaDetailsDTO();
+        FranquiciaDetails franquiciaDetailsDTO = new FranquiciaDetails();
         franquiciaDetailsDTO.setId("1");
         franquiciaDetailsDTO.setNombre("Franquicia Test");
 

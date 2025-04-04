@@ -6,6 +6,7 @@ import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.port.out.FranquiciaRepository;
 import com.proyecto.interno.api_franquicias.domain.port.out.ProductoRepository;
 import com.proyecto.interno.api_franquicias.domain.port.out.SucursalRepository;
+import com.proyecto.interno.api_franquicias.domain.usecase.FranquiciaUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +36,7 @@ class FranquiciaServiceImplTest {
     private ProductoRepository productoRepository;
 
     @InjectMocks
-    private FranquiciaServiceImpl franquiciaService;
+    private FranquiciaUseCase franquiciaService;
 
     private Producto producto;
     private Sucursal sucursal;

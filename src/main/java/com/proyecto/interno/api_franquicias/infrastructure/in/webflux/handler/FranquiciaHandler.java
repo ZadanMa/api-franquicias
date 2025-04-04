@@ -4,12 +4,17 @@ import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDto;
 import com.proyecto.interno.api_franquicias.application.dto.ProductoDto;
 import com.proyecto.interno.api_franquicias.application.dto.ProductoStockDto;
 import com.proyecto.interno.api_franquicias.application.dto.SucursalDto;
+import com.proyecto.interno.api_franquicias.domain.exception.DuplicateResourceException;
+import com.proyecto.interno.api_franquicias.domain.exception.InvalidDataException;
+import com.proyecto.interno.api_franquicias.domain.exception.NotFoundException;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.port.in.FranquiciaManagementUseCase;
+import jakarta.validation.ConstraintViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -17,9 +22,12 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import com.proyecto.interno.api_franquicias.domain.exception.ErrorResponse;
+import jakarta.validation.Validator;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -27,20 +35,22 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public class FranquiciaHandler {
     private static final Logger log = LoggerFactory.getLogger(FranquiciaHandler.class);
     private final FranquiciaManagementUseCase service;
+    private final Validator validator;
 
-    public FranquiciaHandler(FranquiciaManagementUseCase service) {
+    public FranquiciaHandler(FranquiciaManagementUseCase service, Validator validator) {
         this.service = service;
+        this.validator = validator;
     }
 
     public Mono<ServerResponse> registrarFranquicia(ServerRequest request) {
         return request.bodyToMono(Franquicia.class)
+                .doOnNext(this::validate)
                 .flatMap(service::registrarFranquicia)
                 .flatMap(franquicia -> ServerResponse.created(
                                 request.uriBuilder().path("/{id}").build(franquicia.getId()))
                         .contentType(APPLICATION_JSON)
                         .bodyValue(franquicia))
-                .onErrorResume(IllegalArgumentException.class, e ->
-                        ServerResponse.badRequest().bodyValue(new ErrorResponse(e.getMessage())));
+                .onErrorResume(this::handleException);
     }
 
     public Mono<ServerResponse> actualizarNombreFranquicia(ServerRequest request) {
@@ -50,9 +60,7 @@ public class FranquiciaHandler {
                 .flatMap(franquicia -> ServerResponse.ok()
                         .contentType(APPLICATION_JSON)
                         .bodyValue(franquicia))
-                .onErrorResume(e -> e.getMessage().contains("no encontrada")
-                        ? ServerResponse.notFound().build()
-                        : ServerResponse.badRequest().bodyValue(new ErrorResponse(e.getMessage())));
+                .onErrorResume(this::handleException);
     }
 
     public Mono<ServerResponse> getFranquiciaCompleta(ServerRequest request) {
@@ -273,5 +281,47 @@ public class FranquiciaHandler {
                         "timestamp", Instant.now()
                 ));
     }
+    private static final Map<Class<? extends Throwable>, HttpStatus> EXCEPTION_STATUS_MAP = Map.of(
+            NotFoundException.class, HttpStatus.NOT_FOUND,
+            InvalidDataException.class, HttpStatus.BAD_REQUEST,
+            DuplicateResourceException.class, HttpStatus.CONFLICT,
+            IllegalArgumentException.class, HttpStatus.BAD_REQUEST,
+            RuntimeException.class, HttpStatus.INTERNAL_SERVER_ERROR,
+            IncorrectResultSizeDataAccessException.class, HttpStatus.CONFLICT
+    );
 
+    private Mono<ServerResponse> handleException(Throwable error) {
+        HttpStatus status = EXCEPTION_STATUS_MAP.getOrDefault(
+                error.getClass(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+
+        return Mono.fromSupplier(() -> {
+                    String message = (status != HttpStatus.INTERNAL_SERVER_ERROR)
+                            ? error.getMessage()
+                            : "Error interno del servidor";
+
+                    return new ErrorResponse(message);
+                })
+                .flatMap(responseBody ->
+                        ServerResponse.status(status)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(responseBody)
+                )
+                .doOnEach(signal -> {
+                    if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
+                        log.error("Error no controlado: ", error);
+                    }
+                });
+    }
+    private void validate(Object object) {
+        Set<ConstraintViolation<Object>> violations = validator.validate(object);
+        if (!violations.isEmpty()) {
+            String errorMessage = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new InvalidDataException(errorMessage);
+        }
+    }
 }
+

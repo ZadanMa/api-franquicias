@@ -1,7 +1,10 @@
-package com.proyecto.interno.api_franquicias.application.service;
+package com.proyecto.interno.api_franquicias.domain.usecase;
 
-import com.proyecto.interno.api_franquicias.application.dto.FranquiciaDetailsDTO;
-import com.proyecto.interno.api_franquicias.application.dto.SucursalDetailsDTO;
+import com.proyecto.interno.api_franquicias.domain.model.FranquiciaDetails;
+import com.proyecto.interno.api_franquicias.domain.model.SucursalDetails;
+import com.proyecto.interno.api_franquicias.domain.exception.DuplicateResourceException;
+import com.proyecto.interno.api_franquicias.domain.exception.InvalidDataException;
+import com.proyecto.interno.api_franquicias.domain.exception.NotFoundException;
 import com.proyecto.interno.api_franquicias.domain.model.Franquicia;
 import com.proyecto.interno.api_franquicias.domain.model.Sucursal;
 import com.proyecto.interno.api_franquicias.domain.model.Producto;
@@ -20,16 +23,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
-public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
+public class FranquiciaUseCase implements FranquiciaManagementUseCase {
 
     private final FranquiciaRepository franquiciaRepository;
     private final SucursalRepository sucursalRepository;
     private final ProductoRepository productoRepository;
 
     @Autowired
-    public FranquiciaServiceImpl(FranquiciaRepository franquiciaRepository,
-                                          SucursalRepository sucursalRepository,
-                                          ProductoRepository productoRepository) {
+    public FranquiciaUseCase(FranquiciaRepository franquiciaRepository,
+                             SucursalRepository sucursalRepository,
+                             ProductoRepository productoRepository) {
         this.franquiciaRepository = franquiciaRepository;
         this.sucursalRepository = sucursalRepository;
         this.productoRepository = productoRepository;
@@ -39,24 +42,32 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
     public Mono<Franquicia> registrarFranquicia(Franquicia franquicia) {
         return Mono.justOrEmpty(franquicia)
                 .filter(f -> f.getNombre() != null && !f.getNombre().isEmpty())
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nombre de la franquicia no puede estar vacío")))
+                .switchIfEmpty(Mono.error(new InvalidDataException("El nombre de la franquicia no puede estar vacío")))
                 .flatMap(f ->
                         franquiciaRepository.findByNombre(f.getNombre())
-                                .flatMap(existing -> Mono.<Franquicia>error(new IllegalArgumentException("Ya existe una franquicia con ese nombre")))
+                                .flatMap(existing -> Mono.<Franquicia>error(new DuplicateResourceException("Ya existe una franquicia con ese nombre")))
                                 .switchIfEmpty(franquiciaRepository.save(f))
                 );
     }
     @Override
     public Mono<Franquicia> actualizarNombreFranquicia(String franquiciaId, String nuevoNombre) {
-        return Mono.just(nuevoNombre)
-                .filter(nombre -> nombre != null && !nombre.isEmpty())
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("El nuevo nombre no puede estar vacío")))
+        return Mono.justOrEmpty(nuevoNombre)
+                .filter(nombre -> !nombre.trim().isEmpty())
+                .switchIfEmpty(Mono.error(new InvalidDataException("El nuevo nombre no puede estar vacío")))
                 .flatMap(nombre -> franquiciaRepository.findById(franquiciaId)
-                        .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada con ID: " + franquiciaId)))
-                        .flatMap(franquicia -> {
-                            franquicia.setNombre(nombre);
-                            return franquiciaRepository.save(franquicia);
-                        }));
+                        .switchIfEmpty(Mono.error(new NotFoundException("Franquicia no encontrada con ID: " + franquiciaId)))
+                        .flatMap(franquicia -> franquiciaRepository.findByNombre(nombre)
+                                .filter(existenciaFranquicia -> !existenciaFranquicia.getId().equals(franquiciaId))
+                                .hasElement()
+                                .flatMap(existe -> existe
+                                        ? Mono.error(new DuplicateResourceException("Ya existe una franquicia con ese nombre"))
+                                        : Mono.just(franquicia))
+                                .flatMap(f -> {
+                                    f.setNombre(nombre);
+                                    return franquiciaRepository.save(f);
+                                })
+                        )
+                );
     }
     @Override
     public Flux<Map<String, Object>> productoConMasStockPorSucursal(String franquiciaId) {
@@ -81,18 +92,18 @@ public class FranquiciaServiceImpl implements FranquiciaManagementUseCase {
                 );
     }
     @Override
-    public Mono<FranquiciaDetailsDTO> getFranquiciaCompleta(String franquiciaId) {
+    public Mono<FranquiciaDetails> getFranquiciaCompleta(String franquiciaId) {
         return franquiciaRepository.findById(franquiciaId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada con ID: " + franquiciaId)))
                 .flatMap(franquicia -> {
-                    FranquiciaDetailsDTO franquiciaDTO = new FranquiciaDetailsDTO();
+                    FranquiciaDetails franquiciaDTO = new FranquiciaDetails();
                     franquiciaDTO.setId(franquicia.getId());
                     franquiciaDTO.setNombre(franquicia.getNombre());
                     franquiciaDTO.setSucursales(new ArrayList<>());
 
                     return sucursalRepository.findAllByFranquiciaId(franquiciaId)
                             .flatMap(sucursal -> {
-                                SucursalDetailsDTO sucursalDTO = new SucursalDetailsDTO();
+                                SucursalDetails sucursalDTO = new SucursalDetails();
                                 sucursalDTO.setId(sucursal.getId());
                                 sucursalDTO.setNombre(sucursal.getNombre());
                                 return productoRepository.findAllBySucursalId(sucursal.getId())

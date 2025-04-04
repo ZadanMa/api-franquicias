@@ -1,5 +1,6 @@
     package com.proyecto.interno.api_franquicias.domain.model;
 
+    import com.proyecto.interno.api_franquicias.domain.validator.NoNumbers;
     import lombok.Data;
     import lombok.NoArgsConstructor;
     import lombok.AllArgsConstructor;
@@ -13,5 +14,6 @@
     public class Franquicia {
         @Id
         private String id;
+        @NoNumbers
         private String nombre;
     }

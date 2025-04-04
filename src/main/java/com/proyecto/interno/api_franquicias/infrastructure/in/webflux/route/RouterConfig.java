@@ -4,6 +4,7 @@ import com.proyecto.interno.api_franquicias.infrastructure.in.webflux.handler.Fr
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.RouterOperations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -28,6 +29,8 @@ public class RouterConfig {
         return route(GET("/health"), handler::healthCheck)
                 .andRoute(GET("/actuator/health"), handler::healthCheck); // Opcional para compatibilidad con estándares
     }
+
+    //@RouterOperations
     @Bean
     public RouterFunction<ServerResponse> franquiciaRoutes(FranquiciaHandler handler) {
         return RouterFunctions.nest(path("/api/franquicias"),
